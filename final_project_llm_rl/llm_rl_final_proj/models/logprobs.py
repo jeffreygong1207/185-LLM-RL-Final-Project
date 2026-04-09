@@ -13,10 +13,18 @@ def compute_per_token_logprobs(
 ) -> torch.Tensor:
     """Returns log p(x_t | x_<t) for t in [1, L-1]. Shape: [B, L-1]."""
     with torch.set_grad_enabled(enable_grad):
-        # TODO(student): run the causal LM, align logits with the next-token targets,
+        # prev todo: run the causal LM, align logits with the next-token targets,
         # and return per-token log-probabilities of the observed tokens.
         # Hint: use F.cross_entropy with reduction='none' for memory efficiency.
-        raise NotImplementedError("Implement compute_per_token_logprobs in the student starter.")
+        #raise NotImplementedError("Implement compute_per_token_logprobs in the student starter.")
+        out = model(input_ids=input_ids, attention_mask=attention_mask)
+        logits = out.logits
+
+        shift_logits = logits[:, :-1, :]  
+        shift_targets = input_ids[:, 1:]  
+
+        nll = F.cross_entropy(shift_logits.reshape(-1, shift_logits.size(-1)), shift_targets.reshape(-1), reduction="none")  
+        return (-nll).reshape(shift_targets.shape)
 
 
 def build_completion_mask(
