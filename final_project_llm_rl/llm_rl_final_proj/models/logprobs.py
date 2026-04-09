@@ -35,9 +35,16 @@ def build_completion_mask(
 ) -> torch.Tensor:
     """Mask over per-token positions [B, L-1], selecting completion tokens only."""
     del pad_token_id
-    # TODO(student): build a float mask of shape [B, L-1] that selects only completion tokens.
-    # Be careful about the one-token shift between logits[:, :-1] and input_ids[:, 1:].
-    raise NotImplementedError("Implement build_completion_mask in the student starter.")
+
+    B, L = input_ids.shape
+
+    shifted_attention_mask = attention_mask[:, 1:]
+
+    positions = torch.arange(L - 1, device=input_ids.device)
+    completed = (positions >= prompt_input_len - 1)
+
+    return (shifted_attention_mask * completed.unsqueeze(0)).float()
+    
 
 
 def masked_sum(x: torch.Tensor, mask: torch.Tensor, eps: float = 1e-8) -> torch.Tensor:
