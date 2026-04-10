@@ -71,6 +71,13 @@ def approx_kl_from_logprobs(
     Uses estimator: exp(delta) - delta - 1 where delta = log p_ref(a) - log p_new(a).
     """
     del eps, log_ratio_clip
-    # TODO(student): implement the sampled-token KL proxy used throughout the codebase.
+    # (student): implement the sampled-token KL proxy used throughout the codebase.
     # You should mask out non-completion positions and return a scalar batch mean.
-    raise NotImplementedError("Implement approx_kl_from_logprobs in the student starter.")
+    delta = ref_logprobs - new_logprobs
+
+
+    kl_per_token = torch.exp(delta) - delta - 1
+
+    masked_kl = kl_per_token * mask
+    kl = masked_kl.sum() / (mask.sum() + 1e-8)
+    return kl
