@@ -40,6 +40,8 @@ def iter_minibatches(
     generator: Optional[torch.Generator] = None,
     device: Optional[torch.device] = None,
 ) -> Iterator[RolloutBatch]:
+    #prev to do: iterate over the rollout in minibatches, optionally shuffling the row indices,
+    # and yield RolloutBatch objects containing the selected subset.
     if minibatch_size <= 0:
         raise ValueError(f"minibatch_size must be > 0, got {minibatch_size}")
 

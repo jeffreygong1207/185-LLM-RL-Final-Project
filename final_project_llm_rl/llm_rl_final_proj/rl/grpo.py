@@ -28,6 +28,16 @@ class GRPO(RLAlgorithm):
         rollout: RolloutBatch,
         grad_accum_steps: int = 1,
     ) -> Dict[str, float]:
+        # prevtodo(student): implement one GRPO training iteration.
+        # The intended structure is:
+        #   1. loop over PPO epochs,
+        #   2. iterate over rollout minibatches,
+        #   3. recompute token log-probabilities under the current policy,
+        #   4. form PPO ratios against mb.old_logprobs,
+        #   5. apply token-level clipping with the sequence-level GRPO averaging used in this codebase,
+        #   6. add KL regularization against mb.ref_logprobs,
+        #   7. handle gradient accumulation / clipping / optimizer steps,
+        #   8. return the logged metrics expected by the training script.
         cfg = self.cfg
         model.train()
         model.config.use_cache = False
@@ -52,13 +62,7 @@ class GRPO(RLAlgorithm):
         rng.manual_seed(self._next_update_seed())
 
         for _epoch in range(int(cfg.ppo_epochs)):
-            for mb in iter_minibatches(
-                rollout,
-                cfg.minibatch_size,
-                shuffle=True,
-                generator=rng,
-                device=next(model.parameters()).device,
-            ):
+            for mb in iter_minibatches(rollout, cfg.minibatch_size, shuffle=True, generator=rng, device=next(model.parameters()).device):
                 mask = mb.completion_mask
                 if float(mask.sum().item()) <= 0.0:
                     skipped_empty += 1
@@ -71,7 +75,6 @@ class GRPO(RLAlgorithm):
                 ratio = torch.exp(log_ratio)
                 ratio_clipped = ratio.clamp(clip_low, clip_high)
 
-                # PPO objective, applied token-wise but averaged over completion tokens per sequence (GRPO).
                 unclipped = ratio * adv
                 clipped = ratio_clipped * adv
                 token_obj = torch.where(adv >= 0, torch.minimum(unclipped, clipped), torch.maximum(unclipped, clipped))
