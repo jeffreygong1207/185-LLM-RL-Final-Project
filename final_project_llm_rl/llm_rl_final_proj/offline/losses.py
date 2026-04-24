@@ -113,10 +113,10 @@ def compute_offline_preference_loss(
             raise ValueError("AOT requires reference scores.")
         # TODO(student): convert policy/reference scores into chosen and rejected rewards,
         # sort both reward vectors, and apply a DPO-style logistic loss to the quantile gaps.
-        chosen_rewards = torch.empty_like(policy_scores.chosen_logp_sum)
-        rejected_rewards = torch.empty_like(policy_scores.rejected_logp_sum)
-        quantile_gap = torch.empty_like(chosen_rewards)
-        losses = torch.empty_like(chosen_rewards)
+        chosen_rewards = policy_scores.chosen_logp_sum - reference_scores.chosen_logp_sum
+        rejected_rewards = policy_scores.rejected_logp_sum - reference_scores.rejected_logp_sum
+        quantile_gap = torch.sort(chosen_rewards).values - torch.sort(rejected_rewards).values
+        losses = -F.logsigmoid(beta*quantile_gap).mean()
         metrics.update(
             {
                 "preference/aot_chosen_reward_mean": float(chosen_rewards.detach().mean().item()),
