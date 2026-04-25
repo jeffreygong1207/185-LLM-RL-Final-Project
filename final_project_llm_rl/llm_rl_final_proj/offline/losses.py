@@ -97,10 +97,10 @@ def compute_offline_preference_loss(
             raise ValueError("IPO requires reference scores.")
         ref_margin_sum = reference_scores.chosen_logp_sum - reference_scores.rejected_logp_sum
         # TODO(student): compute the reference-corrected IPO logits.
-        logits = torch.empty_like(policy_margin_sum)
+        logits = policy_margin_sum - ref_margin_sum
         target_gap = 1.0 / (2.0 * beta)
         # TODO(student): implement the squared IPO target-gap objective.
-        losses = torch.empty_like(policy_margin_sum)
+        losses = (logits- target_gap) ** 2
         metrics.update(
             {
                 "preference/reference_margin_sum_mean": float(ref_margin_sum.detach().mean().item()),
